@@ -1,0 +1,551 @@
+{
+  "info": {
+    "name": "Tándem Producto 3 (GraphQL)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Orden recomendado: Login admin -> Datos de demo -> el resto. El token se guarda solo en la variable {{token}}."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "url",
+      "value": "http://localhost:4000/graphql"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "usuarioId",
+      "value": ""
+    },
+    {
+      "key": "intercambioId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Salud (GET /salud)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base}}/salud",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "salud"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Login($email: String!, $password: String!) {\n  login(email: $email, password: $password) {\n    token\n    usuario { id nombre email rol }\n  }\n}",
+                "variables": "{\n  \"email\": \"admin@tandem.com\",\n  \"password\": \"admin1234\"\n}"
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.login.token) pm.collectionVariables.set('token', r.data.login.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con contraseña mala (debe dar UNAUTHENTICATED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation { login(email: \"admin@tandem.com\", password: \"mala-mala\") { token } }",
+                "variables": "{}"
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Yo (obtenerUsuarioActivo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { yo { id nombre email rol } }",
+                "variables": "{}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Usuarios",
+      "item": [
+        {
+          "name": "obtenerUsuarios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { usuarios { id nombre email rol creadoEn } }",
+                "variables": "{}"
+              }
+            }
+          }
+        },
+        {
+          "name": "altaUsuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Alta($entrada: NuevoUsuario!) {\n  altaUsuario(entrada: $entrada) { id nombre email rol }\n}",
+                "variables": "{\n  \"entrada\": {\n    \"nombre\": \"Marta Soler\",\n    \"email\": \"marta@tandem.com\",\n    \"password\": \"marta123\"\n  }\n}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.altaUsuario.id) pm.collectionVariables.set('usuarioId', r.data.altaUsuario.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "usuario por id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query($id: ID!) { usuario(id: $id) { id nombre email } }",
+                "variables": "{\n  \"id\": \"{{usuarioId}}\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "borrarUsuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($id: ID!) { borrarUsuario(id: $id) { id email } }",
+                "variables": "{\n  \"id\": \"{{usuarioId}}\"\n}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Intercambios",
+      "item": [
+        {
+          "name": "altaIntercambio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Alta($entrada: NuevoIntercambio!) {\n  altaIntercambio(entrada: $entrada) { id titulo fecha tipo seleccionado }\n}",
+                "variables": "{\n  \"entrada\": {\n    \"titulo\": \"Francés por español\",\n    \"email\": \"marta@tandem.com\",\n    \"fecha\": \"2026-11-12\",\n    \"descripcion\": \"Una hora a la semana por videollamada.\",\n    \"tipo\": \"OFREZCO_IDIOMA\"\n  }\n}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.altaIntercambio.id) pm.collectionVariables.set('intercambioId', r.data.altaIntercambio.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "obtenerIntercambios (todos)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { intercambios { id titulo email fecha tipo seleccionado } totalIntercambios }",
+                "variables": "{}"
+              }
+            }
+          }
+        },
+        {
+          "name": "obtenerIntercambios (filtro + orden + paginación)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query($f: FiltroIntercambios, $o: OrdenIntercambios) {\n  intercambios(filtro: $f, orden: $o, limite: 2, desplazamiento: 0) { titulo fecha tipo }\n  totalIntercambios(filtro: $f)\n}",
+                "variables": "{\n  \"f\": {\n    \"tipo\": \"BUSCO_IDIOMA\",\n    \"texto\": \"inglés\",\n    \"desde\": \"2026-11-01\"\n  },\n  \"o\": {\n    \"campo\": \"FECHA\",\n    \"descendente\": false\n  }\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "intercambio por id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query($id: ID!) { intercambio(id: $id) { id titulo seleccionado } }",
+                "variables": "{\n  \"id\": \"{{intercambioId}}\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "borrarIntercambio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($id: ID!) { borrarIntercambio(id: $id) { id titulo } }",
+                "variables": "{\n  \"id\": \"{{intercambioId}}\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "estadísticas por mes (gráfico)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { estadisticasPorMes { mes total ofrezco busco } }",
+                "variables": "{}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Selección (Dashboard)",
+      "item": [
+        {
+          "name": "seleccionarIntercambio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($id: ID!) { seleccionarIntercambio(id: $id) { id titulo seleccionado } }",
+                "variables": "{\n  \"id\": \"{{intercambioId}}\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "obtenerSeleccionados",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { intercambiosSeleccionados { id titulo fecha tipo } }",
+                "variables": "{}"
+              }
+            }
+          }
+        },
+        {
+          "name": "deseleccionarIntercambio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation($id: ID!) { deseleccionarIntercambio(id: $id) { id seleccionado } }",
+                "variables": "{\n  \"id\": \"{{intercambioId}}\"\n}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Datos de demo",
+      "item": [
+        {
+          "name": "iniciarDatosDemo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}",
+              "host": [
+                "{{url}}"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation { cargarDatosDemo { usuariosCreados intercambiosCreados } }",
+                "variables": "{}"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
