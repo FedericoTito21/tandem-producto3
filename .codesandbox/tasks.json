@@ -1,0 +1,13 @@
+{
+  "setupTasks": [
+    { "name": "Instalar dependencias", "command": "npm install" }
+  ],
+  "tasks": {
+    "start": {
+      "name": "Arrancar API",
+      "command": "npm start",
+      "runAtStart": true,
+      "preview": { "port": 4000 }
+    }
+  }
+}
